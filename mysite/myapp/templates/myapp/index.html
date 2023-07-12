@@ -1,0 +1,315 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <title>Homepage</title>
+   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.6.0/dist/chart.min.js"></script>
+   <link rel="stylesheet" href="{% static 'myapp/output.css' %}">
+</head>
+
+<body>
+    <form class="bg-white rounded px-8 pt-6 pb-8 mb-4" method="POST" enctype="multipart/form-data" >
+        {% csrf_token %}
+        <input class="inline-block font-bold text-sm text-blue-500" type="file" name="file"/>
+        <input class="bg-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" name="submit" id="">
+    </form>
+
+    <table id="table">
+        <thead>
+            <tr>
+                <th class="px-6 py-2 text-sm text-gray-500">Product Name</th>
+                <th class="px-6 py-2 text-sm text-gray-500">Price</th>
+                <th class="px-6 py-2 text-sm text-gray-500">Sales</th>
+                <th class="px-6 py-2 text-sm text-gray-500">Employee Salary</th>
+                <th class="px-6 py-2 text-sm text-gray-500">Tax</th>
+                <th class="px-6 py-2 text-sm text-gray-500">Monthly Expense</th>
+                <th class="px-6 py-2 text-sm text-gray-500">Net Expenses</th>
+                <th class="px-6 py-2 text-sm text-gray-500">Net Income</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for object in data_objects %}
+            <tr>
+                <td class="px-6 py-4 text-sm text-gray-500 font-bold">{{object.name}}</td>
+                <td class="px-6 py-4 text-sm text-green-500">{{object.price}}</td>
+                <td class="px-6 py-4 text-sm text-green-500">{{object.sales}}</td>
+                <td class="px-6 py-4 text-sm text-red-500">{{object.emp}}</td>
+                <td class="px-6 py-4 text-sm text-red-500">{{object.tax}}</td>
+                <td class="px-6 py-4 text-sm text-red-500">{{object.exp}}</td>
+                <td class="px-6 py-4 text-sm text-red-500">{{object.expenses_monthly}}</td>
+                <td class="px-6 py-4 text-sm text-green-500">{{object.income_monthly}}</td>
+                
+
+
+            </tr>
+            {% endfor %}
+
+            <tr>
+                <td class="px-6 py-4 text-sm text-gray-500 font-bold">Total</td>
+                <td id="totalPrice" class="px-6 py-4 text-sm text-green-500 font-bold">0</td>
+                <td id="totalSales" class="px-6 py-4 text-sm text-green-500 font-bold">0</td>
+                <td id="totalEmp" class="px-6 py-4 text-sm text-red-500 font-bold">0</td>
+                <td id="totalTax" class="px-6 py-4 text-sm text-red-500 font-bold">0</td>
+                <td id="totalExp" class="px-6 py-4 text-sm text-red-500 font-bold">0</td>
+                <td id="totalExpense" class="px-6 py-4 text-sm text-red-500 font-bold">0</td>
+                <td id="totalIncome" class="px-6 py-4 text-sm text-green-500 font-bold">0</td>
+                
+
+
+            </tr>
+        </tbody>
+    </table>
+    
+    </br>
+<div class="flex gap-8 m-10">
+    <div class="w-1/2">
+        <div class="text-indigo-600 font-bold ,-10">Income Chart</div>
+        <div>
+            <canvas id="incomeChart" width="400" height="400"></canvas>
+
+        </div>
+    </div>
+    <div class="w-1/2">
+        <div class="text-indigo-600 font-bold ,-10">Expense Chart</div>
+        <div>
+            <canvas id="expenseChart" width="400" height="400"></canvas>
+
+        </div>
+    </div>
+</div>
+<div class="w-1/2">
+    <div class="text-indigo-600 font-bold ,-10">Expense Spread Chart</div>
+    <div>
+        <canvas id="expenseSpreadChart" width="400" height="400"></canvas>
+
+    </div>
+</div>
+<div class="w-1/2">
+    <div class="text-indigo-600 font-bold ,-10">Income Pie Chart</div>
+    <div>
+        <canvas id="incomeSpreadChart" width="400" height="400"></canvas>
+
+    </div>
+</div>
+</div>
+
+    <script>
+        table = document.getElementById("table")
+        // declare variable for original table values
+        let net_prices = 0, net_sales = 0, net_Emp = 0, net_tax = 0, net_monthlyexp = 0, net_netexp = 0, net_netincome = 0;
+        let product = ""
+        // variable for total
+        let total_prices = 0, total_sales = 0, total_Emp = 0, total_tax = 0, total_monthlyexp = 0, total_netexp = 0, total_netincome = 0;
+
+        // Chart array
+        let net_incomes = []
+        let products = []
+        let net_expenses = []
+        let net_emps=[]
+        let net_taxes=[]
+        let net_exps=[]
+
+        for(let i=1;i<table.rows.length - 1;i++) {
+            net_prices = table.rows[i].cells[1].innerText;
+            net_sales = table.rows[i].cells[2].innerText;
+            net_Emp = table.rows[i].cells[3].innerText;
+            net_tax = table.rows[i].cells[4].innerText;
+            net_monthlyexp = table.rows[i].cells[5].innerText;
+            net_netexp = table.rows[i].cells[6].innerText;
+            net_netincome = table.rows[i].cells[7].innerText;
+            product = table.rows[i].cells[0].innerText;
+
+            net_prices = parseInt(net_prices);
+            net_sales = parseInt(net_sales);
+            net_Emp = parseInt(net_Emp);
+            net_tax = parseInt(net_tax);
+            net_monthlyexp = parseInt(net_monthlyexp);
+            net_netexp = parseInt(net_netexp);
+            net_netincome = parseInt(net_netincome);
+
+            // values to array
+            
+            net_incomes.push(net_netincome);
+            
+             products.push(product);
+             net_expenses.push(net_netexp);
+            net_emps.push(net_Emp);
+            net_taxes.push(net_tax);
+            net_exps.push(net_netexp);
+
+            console.log(net_incomes) //net_expenses, net_emps, net_taxes, net_exps);
+
+            total_prices += net_prices;
+            total_sales += net_sales;
+            total_Emp += net_Emp;
+            total_tax += net_tax;
+            total_monthlyexp += net_monthlyexp;
+            total_netexp += net_netexp;
+            total_netincome += net_netincome;
+
+
+        }
+        document.getElementById("totalPrice").innerHTML = total_prices
+        document.getElementById("totalSales").innerHTML = total_sales
+        document.getElementById("totalEmp").innerHTML = total_Emp
+        document.getElementById("totalTax").innerHTML = total_tax
+        document.getElementById("totalExp").innerHTML = total_netexp
+        document.getElementById("totalExpense").innerHTML = total_monthlyexp
+        document.getElementById("totalIncome").innerHTML = total_netincome
+
+        console.log(total_prices, total_sales, total_Emp, total_tax, total_monthlyexp, total_netexp, total_netincome);
+        
+        
+        
+
+
+        const ctx = document.getElementById('incomeChart').getContext('2d');
+const incomeChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: products,
+        datasets: [{
+            label: 'Income in dollars',
+            data: net_incomes,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+const ctx2 = document.getElementById('expenseChart').getContext('2d');
+const expenseChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: products,
+        datasets: [{
+            label: 'Expense in dollars',
+            data: net_expenses,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+const ctx3 = document.getElementById('expenseSpreadChart').getContext('2d');
+const expenseSpreadChart = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+        labels: products,
+        datasets: [{
+            label: 'Monthly EMI',
+            data: net_emps,
+            backgroundColor: [
+                
+                
+                'rgba(255, 15, 64, 30)'
+            ],
+            borderWidth: 1
+        },{
+            label: 'Monthly tax',
+            data: net_taxes,
+            backgroundColor: [
+                
+                
+                'rgba(40, 159, 23, 1)'
+            ],
+            borderWidth: 1
+        },{
+            label: 'Other expenses',
+            data: net_exps,
+            backgroundColor: [
+                
+                
+                'rgba(134, 35, 12, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+const ctx4 = document.getElementById('incomeSpreadChart').getContext('2d');
+const incomeSpreadChart = new Chart(ctx4, {
+    type: 'pie',
+    data: {
+        labels: products,
+        datasets: [{
+            label: 'Income in dollars',
+            data: net_incomes,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        
+    }
+});
+    </script>
+</body>
+
+</html>
